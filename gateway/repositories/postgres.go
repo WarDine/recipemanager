@@ -1,6 +1,6 @@
 package repositories
 
-import "domain"
+import "recipemanager/domain"
 
 type PostgressManager struct {
 }

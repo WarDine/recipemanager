@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	api "recipemanager/gateway/api"
+)
 
 func main() {
 	fmt.Println("Hello World!")
+
+
+	api.StartServer()
+	
 }
