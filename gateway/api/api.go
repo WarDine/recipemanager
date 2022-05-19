@@ -24,7 +24,6 @@ func handleGetRecipe(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(recipe)
 }
 
-
 func handleCreateRecipe(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("Content-Type") != "application/json" {
