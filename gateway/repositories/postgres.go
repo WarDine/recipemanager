@@ -2,9 +2,6 @@ package repositories
 
 import (
 	"recipemanager/domain"
-	// "recipemanager/usecases"
-	// "database/sql"
-    // "encoding/json"
     "fmt"
     "log"
 	"os"
@@ -12,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"reflect"
-	// "recipemanager/usecases"
+	"recipemanager/usecases"
 	_ "github.com/lib/pq"
 	"github.com/jmoiron/sqlx"
 )
@@ -20,6 +17,8 @@ import (
 type PostgresManager struct {
 	conn *sqlx.DB
 }
+
+var PostgresRepo *PostgresManager;
 
 // Enforce interface
 var _ domain.PostgressManagerInterface = (*PostgresManager)(nil)
@@ -69,16 +68,9 @@ func (pg *PostgresManager) DeleteConnection() {
 	defer pg.conn.Close()
 }
 
-type Ingredient struct {
-	Ingredient_uid int `db:"ingredient_uid" json:"ingredientUID"`
-	Name string `db:"ingredient_name" json:"name"`
-	RecipeUID int `db:"recipe_uid" json:"recipeUID"`
-	Amount int `db:"amount" json:"amount"`
-}
-
 // get list of all db tags of a struct ingredient
 // call with GetListDBTags(ingredient)
-func GetListDBTags(genericStruct *Ingredient) []string {
+func GetListDBTags(genericStruct *usecases.Ingredient) []string {
 
 	t := reflect.TypeOf(*genericStruct)
 
@@ -148,10 +140,12 @@ func createQueryValues(fields []string ) string {
 
 // example of query
 // tx.NamedExec("INSERT INTO ingredient (ingredient_name, recipe_uid, amount) VALUES (:ingredient_name, :recipe_uid, :amount)", &second_ingredient)
-func (pg *PostgresManager) InsertIngredientIntoDB(tableName string, ingredient *Ingredient) {
+func (pg *PostgresManager) InsertIngredientIntoDB(tableName string, ingredient *usecases.Ingredient) {
 
 	structTags := GetListDBTags(ingredient)
+	// INSERT INTO ingredient (ingredient_uid, ingredient_name, calories) VALUES (:ingredient_uid, :ingredient_name, :calories)
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, createQueryFields(structTags), createQueryValues(structTags))
+	log.Println("Query for databse is: ", query)
 	db := pg.conn
 
 	tx := db.MustBegin()
@@ -163,11 +157,11 @@ func (pg *PostgresManager) InsertIngredientIntoDB(tableName string, ingredient *
 	}
 }
 
-func (pg *PostgresManager) GetAllIngredients(tableName string) []Ingredient {
+func (pg *PostgresManager) GetAllIngredients(tableName string) []usecases.Ingredient {
 
 	db := pg.conn
 
-	ingredients := []Ingredient{}
+	ingredients := []usecases.Ingredient{}
 	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
 	if err != nil {
 		log.Fatal(err)
@@ -189,7 +183,7 @@ func convertfilterToString(m map[string]interface{}) {
  * it will be converted into a string an added in query
  */
  // WIP
-func (pg *PostgresManager) GetFilteredIngredients(tableName string, filter string) []Ingredient {
+func (pg *PostgresManager) GetFilteredIngredients(tableName string, filter string) []usecases.Ingredient {
 
 	db := pg.conn
 
@@ -198,7 +192,7 @@ func (pg *PostgresManager) GetFilteredIngredients(tableName string, filter strin
 		return pg.GetAllIngredients(tableName)
 	}
 
-	ingredients := []Ingredient{}
+	ingredients := []usecases.Ingredient{}
 	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
 	if err != nil {
 		log.Fatal(err)
@@ -212,12 +206,13 @@ func (pg *PostgresManager) GetFilteredIngredients(tableName string, filter strin
 }
 
 // this function is just an example of how to use sqlx lib
+/*
 func (pg *PostgresManager) TestDatabase(tableName string) {
 
 	db := pg.conn
 
 	tx := db.MustBegin()
-	var secondIngredient = &Ingredient {
+	var secondIngredient = &usecases.Ingredient {
 		Name: "Pastarnac",
 		RecipeUID: 1918273,
 		Amount: 2,
@@ -228,7 +223,7 @@ func (pg *PostgresManager) TestDatabase(tableName string) {
 	tx.MustExec("INSERT INTO ingredient (ingredient_name, recipe_uid, amount) VALUES ($1, $2, $3)", "Morcov", 1918273, 4)
 	tx.Commit()
 
-	ingredients := []Ingredient{}
+	ingredients := []usecases.Ingredient{}
 
 	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
 	if err != nil {
@@ -252,37 +247,4 @@ func (pg *PostgresManager) TestDatabase(tableName string) {
 	pg.DeleteConnection()
 }
 
-
-/* function for old apy -- keep just for a basic example */
-
-// func (pg *PostgresManager) GetSelectiveData(tableName string, columns ...string ) {
-
-// 	var query strings.Builder
-
-// 	query.WriteString("SELECT ")
-
-// 	for i, columnName := range columns {
-// 		if i == len(columns) - 1 {
-// 			query.WriteString(columnName)
-// 			query.WriteString(" ")
-// 			break
-// 		}
-
-// 		query.WriteString(columns[i])
-// 		query.WriteString(", ")
-
-// 	}
-
-// 	query.WriteString("FROM ")
-// 	query.WriteString(tableName)
-// 	query.WriteString(";")
-
-// 	rows, err := pg.conn.Query(query.String())
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	fmt.Printf("%+v\n", rows)
-
-// 	defer rows.Close()
-// }
+*/

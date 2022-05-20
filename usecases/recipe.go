@@ -13,16 +13,6 @@ type Recipe struct {
 	Ingredients []Ingredient `json:"ingredients,omitempty"`
 }
 
-type Ingredient struct {
-	Name string `json:"name"`
-	RecipeUID int `json:"recipeUID"`
-	Amount int `json:"amount"`
-}
-
-// type Ingredients struct {
-
-// }
-
 type Menu struct {
 
 }

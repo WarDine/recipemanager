@@ -50,15 +50,15 @@ create table recipe (
     constraint fk_recipe foreign key (mass_hall_uid) references mass_hall (mass_halls_uid)
     );
 
-create table ingredient (
+create table recipe_ingredients (
     ingredient_uid integer primary key not null default nextval('ingredient_seq'),
-    ingredient_name varchar(255),
     recipe_uid integer,
     amount integer
     );
 
-create table ingredients (
+create table ingredient (
     ingredient_uid integer,
     ingredient_name varchar(255),
-    constraint fk_ingredients foreign key (ingredient_uid) references ingredient (ingredient_uid)
+    calories integer
+    -- constraint fk_ingredients foreign key (ingredient_uid) references recipe_ingredients (ingredient_uid)
     );

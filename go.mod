@@ -2,14 +2,6 @@ module recipemanager
 
 go 1.16
 
-// replace github.com/WarDine/recipemanager/domain => /home/adrian/Documents/pweb/backend/recipemanager/domain
-
-// replace github.com/WarDine/recipemanager/api => /home/adrian/Documents/pweb/backend/recipemanager/api
-
-// replace github.com/WarDine/recipemanager/repositories => /home/adrian/Documents/pweb/backend/recipemanager/repositories
-
-// replace github.com/WarDine/recipemanager/usecases => /home/adrian/Documents/pweb/backend/recipemanager/usecases
-
 require (
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect

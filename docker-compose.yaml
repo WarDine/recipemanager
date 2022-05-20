@@ -10,7 +10,7 @@ services:
     container_name: recipemanager
     hostname: recipemanager
     ports:
-      - "8080:80"
+      - "0.0.0.0:8080:80"
     environment:                                                                
       PGHOST: my_db
       PGUSER: ${PGUSER}
