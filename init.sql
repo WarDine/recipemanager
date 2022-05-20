@@ -1,53 +1,53 @@
 -- create database wardine;
 \c wardine;
 
-create sequence mass_hall_admins_seq;
-create sequence mass_hall_seq;
+create sequence messhall_admins_seq;
+create sequence messhall_seq;
 create sequence menu_seq;
 create sequence main_admin_seq;
 create sequence recipe_seq;
 create sequence ingredient_seq;
 
 create table menu (
-                      menu_uid integer primary key not null default nextval('menu_seq'),
-                      recipe_uid integer,
-                      time_stamp timestamp not null default current_timestamp
+    menu_uid integer primary key not null default nextval('menu_seq'),
+    recipe_uid integer,
+    time_stamp timestamp not null default current_timestamp
 );
 
-create table mass_hall (
-    mass_halls_uid integer primary key not null default nextval('mass_hall_seq'),
+create table messhall (
+    messhalls_uid integer primary key not null default nextval('messhall_seq'),
     street varchar (255) not null,
     city varchar (255) not null,
     county varchar (255) not null,
     menu_uid integer not null,
     attendance_number integer not null,
-    constraint fk_mass_hall foreign key (menu_uid) references menu (menu_uid)
+    constraint fk_messhall foreign key (menu_uid) references menu (menu_uid)
     );
 
-create table mass_halls_admins (
-                                   mass_halls_admins_uid integer primary key not null default nextval('mass_hall_admins_seq'),
-                                   nickname varchar(255) not null,
-                                   mass_hall_uid integer unique ,
-                                   constraint fk_mass_halls_admins foreign key (mass_hall_uid) references mass_hall (mass_halls_uid)
+create table messhalls_admins (
+    messhalls_admins_uid integer primary key not null default nextval('messhall_admins_seq'),
+    nickname varchar(255) not null,
+    messhall_uid integer unique ,
+constraint fk_messhalls_admins foreign key (messhall_uid) references messhall (messhalls_uid)
 );
 
 create table main_admins (
     main_admin_uid integer primary key not null default nextval('main_admin_seq'),
-    mass_hall_admin_uid integer,
+    messhall_admin_uid integer,
     nickname varchar(255) not null,
-    constraint fk_main_admins foreign key (mass_hall_admin_uid) references mass_halls_admins (mass_halls_admins_uid)
+    constraint fk_main_admins foreign key (messhall_admin_uid) references messhalls_admins (messhalls_admins_uid)
     );
 
 create table recipe (
     recipe_uid integer primary key not null default nextval('recipe_seq'),
-    mass_hall_uid integer,
+    messhall_uid integer,
     nname varchar(255) not null,
     description varchar(1000) not null,
     calories integer,
     cooking_time integer,
     instructions varchar(255),
     portions integer,
-    constraint fk_recipe foreign key (mass_hall_uid) references mass_hall (mass_halls_uid)
+    constraint fk_recipe foreign key (messhall_uid) references messhall (messhalls_uid)
     );
 
 create table recipe_ingredients (
