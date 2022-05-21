@@ -301,3 +301,4 @@ func (pg *PostgresManager) InsertMenu(menu *usecases.Menu, messhallUID string) {
 		log.Println(err)
 	}
 }
+

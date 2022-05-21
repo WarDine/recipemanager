@@ -18,7 +18,7 @@ create table messhall (
     messhalls_uid varchar(255) primary key not null default nextval('messhall_seq'),
     street varchar (255) not null,
     city varchar (255) not null,
-    county varchar (255) not null,
+    country varchar (255) not null,
     menu_uid varchar (255) not null,
     status varchar (255) not null,
     attendance_number integer not null

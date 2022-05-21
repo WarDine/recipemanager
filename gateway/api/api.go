@@ -315,90 +315,82 @@ func GenerateShoppingList(w http.ResponseWriter, r *http.Request) {
 //API
 // AddMessHall add a new mess hall and its admin
 // func AddMessHall(request *restful.Request, response *restful.Response) {
-func AddMessHall(w http.ResponseWriter, r *http.Request) {
+// func AddMessHall(w http.ResponseWriter, r *http.Request) {
 
-	if r.Header.Get("Content-Type") != "application/json" {
-		msg := "Content-Type header is not application/json\n"
-		http.Error(w, msg, http.StatusUnsupportedMediaType)
-		return
-	}
+// 	if r.Header.Get("Content-Type") != "application/json" {
+// 		msg := "Content-Type header is not application/json\n"
+// 		http.Error(w, msg, http.StatusUnsupportedMediaType)
+// 		return
+// 	}
 
-	var queryBody domain.AddMessHallInfoQuery
-	// var recipeBlob domain.PostgresManagerCreateRecipeStruct
+// 	var queryBody domain.AddMessHallInfoQuery
+// 	// var recipeBlob domain.PostgresManagerCreateRecipeStruct
 
-	decoder := json.NewDecoder(r.Body)
+// 	decoder := json.NewDecoder(r.Body)
 
-	err := decoder.Decode(&queryBody)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "%+v", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	} else {
-		fmt.Fprintf(os.Stdout, "messhall info body: %+v\n", queryBody)
-		w.WriteHeader(http.StatusOK)
-	}
+// 	err := decoder.Decode(&queryBody)
+// 	if err != nil {
+// 		fmt.Fprintf(os.Stdout, "%+v", err.Error())
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 	} else {
+// 		fmt.Fprintf(os.Stdout, "messhall info body: %+v\n", queryBody)
+// 		w.WriteHeader(http.StatusOK)
+// 	}
 
-	/* Populate new mess hall struct */
-	messHallUID := uuid.New().String()
-	newMessHall := usecases.MessHall{
-		MessHallUID:      messHallUID,
-		Street:           queryBody.Street,
-		City:             queryBody.City,
-		Country:          queryBody.Country,
-		Status:           queryBody.Status,
-		AttendanceNumber: queryBody.AttendanceNumber,
-	}
+// 	/* Populate new mess hall struct */
+// 	messHallUID := uuid.New().String()
+// 	newMessHall := usecases.MessHall{
+// 		MessHallUID:      messHallUID,
+// 		Street:           queryBody.Street,
+// 		City:             queryBody.City,
+// 		Country:          queryBody.Country,
+// 		Status:           queryBody.Status,
+// 		AttendanceNumber: queryBody.AttendanceNumber,
+// 	}
 
-	/* Populat new mess hall admin struct */
-	newMessHallAdmin := usecases.MessHallAdmin{
-		MessHallAdminUID: uuid.New().String(),
-		Nickname:         queryBody.MessHallAdminNickname,
-		MessHallUID:      messHallUID,
-	}
+// 	/* Populat new mess hall admin struct */
+// 	newMessHallAdmin := usecases.MessHallAdmin{
+// 		MessHallAdminUID: uuid.New().String(),
+// 		Nickname:         queryBody.MessHallAdminNickname,
+// 		MessHallUID:      messHallUID,
+// 	}
 
-	/* Add mess hall info and its admin info to repository */
-	err = repo.PostgresRepo.AddMessHall(&newMessHall, &newMessHallAdmin)
-	if err != nil {
-		json.NewEncoder(w).Encode("ERROR: failed to add new mess hall")
-		if err != nil {
-			return
-		}
-		return
-	}
+// 	/* Add mess hall info and its admin info to repository */
+// 	err = repo.PostgresRepo.AddMessHall(&newMessHall, &newMessHallAdmin)
+// 	if err != nil {
+// 		json.NewEncoder(w).Encode("ERROR: failed to add new mess hall")
+// 		if err != nil {
+// 			return
+// 		}
+// 		return
+// 	}
 
-	err = json.NewEncoder(w).Encode(newMessHall)
-	if err != nil {
-		return
-	}
-}
+// 	err = json.NewEncoder(w).Encode(newMessHall)
+// 	if err != nil {
+// 		return
+// 	}
+// }
 
 
-func AddMenu(w http.ResponseWriter, r *http.Request) {
-
-	if r.Header.Get("Content-Type") != "application/json" {
-		msg := "Content-Type header is not application/json\n"
-		http.Error(w, msg, http.StatusUnsupportedMediaType)
-		return
-	}
+func GenerateMenu(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	messhallUID := params["messhallUID"]
 
-	var newMenu usecases.Menu
-	decoder := json.NewDecoder(r.Body)
+	recipes := repo.PostgresRepo.GetRecipesByMesshallUID(messhallUID)
 
-	err := decoder.Decode(&newMenu)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "%+v", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	} else {
-		fmt.Fprintf(os.Stdout, "Menu: %+v\n", newMenu)
-		w.WriteHeader(http.StatusOK)
+	menuUID := uuid.New().String()
+	menuTimestamp := time.Now().Format("01-02-2006")
+	
+	for _, recipe := range recipes {
+		menu := &usecases.Menu {
+			MenuUID: menuUID,
+			RecipeUID: recipe.RecipeUID,
+			TimeStamp: menuTimestamp,
+		}
+
+		repo.PostgresRepo.InsertMenu(menu, messhallUID)
 	}
-
-	newMenu.MenuUID = uuid.New().String()
-	newMenu.TimeStamp = time.Now().Format("01-02-2006")
-	repo.PostgresRepo.InsertMenu(&newMenu, messhallUID)
-	json.NewEncoder(w).Encode(newMenu)
 }
 
 func NewRecipeAPI() *mux.Router {
@@ -429,14 +421,12 @@ func NewRecipeAPI() *mux.Router {
 	router.HandleFunc("/api/stock-of-ingredient/{messhallUID}&{ingredientUID}", handleGetStockIngredient).Methods("GET")
 	router.HandleFunc("/api/stock/add", handleAddStock).Methods("POST")
 
-	router.HandleFunc("/api/messhall/add", AddMessHall).Methods("POST")
+	// router.HandleFunc("/api/messhall/add", AddMessHall).Methods("POST")
 
 	router.HandleFunc("/api/menu/get-meshall-menu/{messhallUID}", GetMessHallMenu).Methods("GET")
-	router.HandleFunc("/api/menu/add/{messhallUID}", AddMenu).Methods("POST")
+	// router.HandleFunc("/api/menu/add/{messhallUID}", AddMenu).Methods("POST")
+	router.HandleFunc("/api/menu/generate/{messhallUID}", GenerateMenu).Methods("GET")
 
-
-	// router.HandleFunc("/api/recipe-ingredients/add", handleAddIngredient).Methods("POST")
-	// router.HandleFunc("/api/recipe-ingredients/add", handleAddIngredient).Methods("POST")
 
 	return router
 }
