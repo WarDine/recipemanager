@@ -14,9 +14,5 @@ type Recipe struct {
 	Portions int `db:"portions" json:"portions,omitempty"`
 }
 
-type Menu struct {
-
-}
-
 // Enforce interface
 // var _ domain.Recipe = (*Recipe)(nil)

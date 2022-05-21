@@ -9,9 +9,9 @@ create sequence recipe_seq;
 create sequence ingredient_seq;
 
 create table menu (
-    menu_uid varchar(255) primary key not null default nextval('menu_seq'),
+    menu_uid varchar(255), --primary key not null default nextval('menu_seq'),
     recipe_uid varchar(255),
-    time_stamp timestamp not null default current_timestamp
+    time_stamp date not null default current_date
 );
 
 create table messhall (
@@ -20,6 +20,7 @@ create table messhall (
     city varchar (255) not null,
     county varchar (255) not null,
     menu_uid varchar (255) not null,
+    status varchar (255) not null,
     attendance_number integer not null
     -- constraint fk_messhall foreign key (menu_uid) references menu (menu_uid)
 );

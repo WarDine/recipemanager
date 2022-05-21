@@ -13,3 +13,12 @@ type PostgresManagerCreateRecipeStruct struct {
 	Recipe usecases.Recipe `json:"recipe"`
 	RecipeIngredients []usecases.RecipeIngredient `json:"recipeIngredients"`
 }
+
+type AddMessHallInfoQuery struct {
+	MessHallAdminNickname string
+	Street                string
+	City                  string
+	Country               string
+	Status                string
+	AttendanceNumber      int
+}

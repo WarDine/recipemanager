@@ -30,7 +30,6 @@ func (pg *PostgresManager) InsertIngredientIntoDB(tableName string, ingredient *
 	structTags := pg.getListDBTagsIngredient(ingredient)
 	// INSERT INTO ingredient (ingredient_uid, ingredient_name, calories) VALUES (:ingredient_uid, :ingredient_name, :calories)
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, createQueryFields(structTags), createQueryValues(structTags))
-	log.Println("Query for databse is: ", query)
 	db := pg.conn
 
 	tx := db.MustBegin()

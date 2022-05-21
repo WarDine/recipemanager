@@ -25,7 +25,6 @@ func (pg *PostgresManager) InsertRecipeIngredientIntoDB(tableName string, recipe
 
 	structTags := pg.getListDBTagsRecipeIngredients(recipeIngredient)
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, createQueryFields(structTags), createQueryValues(structTags))
-	log.Println("Query for databse is: ", query)
 	db := pg.conn
 
 	tx := db.MustBegin()
@@ -120,7 +119,5 @@ func (pg *PostgresManager) DeleteRecipeIngredientsForMesshall(messhallUID string
 		}
 	}
 
-
 	return nil
 }
-

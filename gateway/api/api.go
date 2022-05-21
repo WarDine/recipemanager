@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 	"os"
 	"log"
 	repo "recipemanager/gateway/repositories"
@@ -203,6 +204,30 @@ func handleGetStockIngredient(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(stock)
 }
 
+func GetMessHallMenu(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	messhallUID := params["messhallUID"]
+
+	messHallMenuEntries, err := repo.PostgresRepo.GetMessHallMenuInfo(messhallUID)
+	if err != nil {
+		return
+	}
+
+	log.Println("Messhall menu entries: ", messHallMenuEntries)
+	menuRecipes := []usecases.Recipe{}
+	for i, menuEntry := range messHallMenuEntries {
+
+		log.Printf("Menu entry number %d : %v\n", i, messHallMenuEntries)
+
+		recipe := repo.PostgresRepo.GetRecipesByRecipeUID(menuEntry.RecipeUID)
+		log.Println("Recipe: ", recipe)
+
+		menuRecipes = append(menuRecipes, recipe[0])
+	}
+
+	json.NewEncoder(w).Encode(menuRecipes)
+}
+
 func handleAddStock(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("Content-Type") != "application/json" {
@@ -227,6 +252,155 @@ func handleAddStock(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newStock)
 }
 
+func GenerateShoppingList(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	messhallUID := params["messhallUID"]
+
+	
+	shoppingList := make(map[string]int)
+	stockMap := make(map[string]int)
+	recipeMap := make(map[string]int)
+
+	stock := repo.PostgresRepo.GetStockOfMesshall(messhallUID)
+	menu, _ := repo.PostgresRepo.GetMessHallMenuInfo(messhallUID)
+
+	if menu == nil {
+		log.Println("Menu does not exist")
+		json.NewEncoder(w).Encode("Menu does not exist")
+		return
+	}
+
+	// create map with stock
+	for _, stockEntry := range stock {
+		stockMap[stockEntry.IngredientUID] = stockEntry.Amount
+	}
+
+	log.Println("Current Stock: ", stockMap)
+
+	recipeIngredients := []usecases.RecipeIngredient{}
+
+	for _, menuEntry := range menu {
+		recipeIngredients = append(recipeIngredients, repo.PostgresRepo.GetIngredientsForRecipe(menuEntry.RecipeUID)...)
+	}
+	
+	// create map with all ingredients we need
+	for _, ingredientsEntry := range recipeIngredients {
+		recipeMap[ingredientsEntry.Ingredient_uid] += ingredientsEntry.Amount
+	}
+
+	log.Println("Ingredients for recipes: ", recipeMap)
+
+	// create shopping list
+	for ingredientUID, amount := range recipeMap {
+
+		stockIngredientAmount, exist := stockMap[ingredientUID]
+		if !exist {
+			log.Println("!!")
+			shoppingList[ingredientUID] = amount
+			continue
+		}
+
+		if  stockIngredientAmount < amount {
+			log.Println("??")
+			shoppingList[ingredientUID] = amount - stockIngredientAmount
+		} 
+	}
+
+	log.Println("Shopping List: ", shoppingList)
+
+	json.NewEncoder(w).Encode(shoppingList)
+}
+
+
+//API
+// AddMessHall add a new mess hall and its admin
+// func AddMessHall(request *restful.Request, response *restful.Response) {
+func AddMessHall(w http.ResponseWriter, r *http.Request) {
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		msg := "Content-Type header is not application/json\n"
+		http.Error(w, msg, http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var queryBody domain.AddMessHallInfoQuery
+	// var recipeBlob domain.PostgresManagerCreateRecipeStruct
+
+	decoder := json.NewDecoder(r.Body)
+
+	err := decoder.Decode(&queryBody)
+	if err != nil {
+		fmt.Fprintf(os.Stdout, "%+v", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		fmt.Fprintf(os.Stdout, "messhall info body: %+v\n", queryBody)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	/* Populate new mess hall struct */
+	messHallUID := uuid.New().String()
+	newMessHall := usecases.MessHall{
+		MessHallUID:      messHallUID,
+		Street:           queryBody.Street,
+		City:             queryBody.City,
+		Country:          queryBody.Country,
+		Status:           queryBody.Status,
+		AttendanceNumber: queryBody.AttendanceNumber,
+	}
+
+	/* Populat new mess hall admin struct */
+	newMessHallAdmin := usecases.MessHallAdmin{
+		MessHallAdminUID: uuid.New().String(),
+		Nickname:         queryBody.MessHallAdminNickname,
+		MessHallUID:      messHallUID,
+	}
+
+	/* Add mess hall info and its admin info to repository */
+	err = repo.PostgresRepo.AddMessHall(&newMessHall, &newMessHallAdmin)
+	if err != nil {
+		json.NewEncoder(w).Encode("ERROR: failed to add new mess hall")
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(newMessHall)
+	if err != nil {
+		return
+	}
+}
+
+
+func AddMenu(w http.ResponseWriter, r *http.Request) {
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		msg := "Content-Type header is not application/json\n"
+		http.Error(w, msg, http.StatusUnsupportedMediaType)
+		return
+	}
+
+	params := mux.Vars(r)
+	messhallUID := params["messhallUID"]
+
+	var newMenu usecases.Menu
+	decoder := json.NewDecoder(r.Body)
+
+	err := decoder.Decode(&newMenu)
+	if err != nil {
+		fmt.Fprintf(os.Stdout, "%+v", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		fmt.Fprintf(os.Stdout, "Menu: %+v\n", newMenu)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	newMenu.MenuUID = uuid.New().String()
+	newMenu.TimeStamp = time.Now().Format("01-02-2006")
+	repo.PostgresRepo.InsertMenu(&newMenu, messhallUID)
+	json.NewEncoder(w).Encode(newMenu)
+}
+
 func NewRecipeAPI() *mux.Router {
 	
 	var router = mux.NewRouter()
@@ -245,6 +419,7 @@ func NewRecipeAPI() *mux.Router {
 	router.HandleFunc("/api/ingredient", handleGetIngredient).Methods("GET")
 	router.HandleFunc("/api/ingredient/{recipeUID}", handleGetIngredientWithUID).Methods("GET")
 	router.HandleFunc("/api/ingredient/add", handleAddIngredient).Methods("POST")
+	router.HandleFunc("/api/ingredient/generate/{messhallUID}", GenerateShoppingList).Methods("GET")
 
 	router.HandleFunc("/api/recipe-ingredients", handleGetRecipeIngredients).Methods("GET")
 	router.HandleFunc("/api/recipe-ingredients/{recipeUID}", handleGetRecipeIngredientsByUID).Methods("GET")
@@ -254,6 +429,10 @@ func NewRecipeAPI() *mux.Router {
 	router.HandleFunc("/api/stock-of-ingredient/{messhallUID}&{ingredientUID}", handleGetStockIngredient).Methods("GET")
 	router.HandleFunc("/api/stock/add", handleAddStock).Methods("POST")
 
+	router.HandleFunc("/api/messhall/add", AddMessHall).Methods("POST")
+
+	router.HandleFunc("/api/menu/get-meshall-menu/{messhallUID}", GetMessHallMenu).Methods("GET")
+	router.HandleFunc("/api/menu/add/{messhallUID}", AddMenu).Methods("POST")
 
 
 	// router.HandleFunc("/api/recipe-ingredients/add", handleAddIngredient).Methods("POST")
@@ -274,3 +453,8 @@ func StartServer() {
 	log.Fatal(http.ListenAndServe(HttpServerPort, handlers.CORS(originsOk, headersOk, methodsOk)(router)))
 
 }
+
+// INSERT INTO menu(menu_uid, recipe_uid, time_stamp) VALUES ('1', '2260f2b4-db58-4ef2-93e9-08c265d01f3f', '2016-06-22 19:10:25-07');
+// INSERT INTO menu(menu_uid, recipe_uid, time_stamp) VALUES ('1', 'f30642fb-08a8-4671-b6df-d48603d4a06a', '2016-06-22 19:10:25-07');
+
+// UPDATE messhall SET menu_uid = '1'  WHERE messhalls_uid = 'ba7c94ce-537a-4c64-a961-6928ae0ea252';

@@ -14,6 +14,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	selectMessHallInfoByIDQuery = "SELECT * FROM messhall WHERE messhalls_uid = '%s';"
+	selectMessHallMenuInfoQuery = "SELECT * FROM menu WHERE menu_uid = '%s';"
+)
+
 type PostgresManager struct {
 	conn *sqlx.DB
 }
@@ -156,46 +161,143 @@ func (pg *PostgresManager) GetFilteredIngredients(tableName string, filter strin
 	return  ingredients
 }
 
-// this function is just an example of how to use sqlx lib
-/*
-func (pg *PostgresManager) TestDatabase(tableName string) {
+// GetAllMessHallsInfoByID
+func (pg *PostgresManager) GetMessHallsInfoByID(id string) ([]usecases.MessHall, error) {
+
+	db := pg.conn
+
+	messHalls := []usecases.MessHall{}
+	query := fmt.Sprintf(selectMessHallInfoByIDQuery, id)
+	err := db.Select(&messHalls, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return messHalls, nil
+}
+
+
+
+// GetMessHallMenuInfo for a mess hall
+func (pg *PostgresManager) GetMessHallMenuInfo(messHallID string) ([]usecases.Menu, error) {
+
+	db := pg.conn
+
+	/* Get the messhall with this ID*/
+	messHall, err := pg.GetMessHallsInfoByID(messHallID)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("Messhall ", messHall)
+
+	if len(messHall) == 0 {
+		return nil, nil
+	}
+	/* Get the menu for this mess hall */
+	messHallMenu := []usecases.Menu{}
+	query := fmt.Sprintf(selectMessHallMenuInfoQuery, messHall[0].MenuUID)
+	err = db.Select(&messHallMenu, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return messHallMenu, nil
+}
+
+// getListDBMEssHallTags
+func getListDBMEssHallTags(messHall *usecases.MessHall) []string {
+
+	t := reflect.TypeOf(*messHall)
+
+	tagFields := make([]string, t.NumField())
+	for i := range tagFields {
+		tagFields[i] = GetDBTagName(messHall, t.Field(i).Name)
+	}
+
+	return tagFields
+}
+
+// getListDBMEssHallTags
+func getListDBTagsMenu(menu *usecases.Menu) []string {
+
+	t := reflect.TypeOf(*menu)
+
+	tagFields := make([]string, t.NumField())
+	for i := range tagFields {
+		tagFields[i] = GetDBTagName(menu, t.Field(i).Name)
+	}
+
+	return tagFields
+}
+
+// getListDBMEssHallAdminTags
+func getListDBMEssHallAdminTags(messHall *usecases.MessHallAdmin) []string {
+
+	t := reflect.TypeOf(*messHall)
+
+	tagFields := make([]string, t.NumField())
+	for i := range tagFields {
+		tagFields[i] = GetDBTagName(messHall, t.Field(i).Name)
+	}
+
+	return tagFields
+}
+
+// AddMessHall creates a new mess hall entry
+func (pg *PostgresManager) AddMessHall(messHall *usecases.MessHall, messHallAdmin *usecases.MessHallAdmin) error {
+
+	db := pg.conn
+	masshassTX := db.MustBegin()
+	masshassadminsTX := db.MustBegin()
+
+	//insert mess Hall info into table
+	structTags := getListDBMEssHallTags(messHall)
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", "messhall", createQueryFields(structTags), createQueryValues(structTags))
+	masshassTX.NamedExec(query, &messHall)
+	err := masshassTX.Commit()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	//insert mess hall admin info into table
+	structTags = getListDBMEssHallAdminTags(messHallAdmin)
+	query = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", "messhalls_admins", createQueryFields(structTags), createQueryValues(structTags))
+	masshassadminsTX.NamedExec(query, &messHallAdmin)
+	err = masshassadminsTX.Commit()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func (pg *PostgresManager) InsertMenu(menu *usecases.Menu, messhallUID string) {
+
+	structTags := getListDBTagsMenu(menu)
+	// INSERT INTO ingredient (ingredient_uid, ingredient_name, calories) VALUES (:ingredient_uid, :ingredient_name, :calories)
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", "menu", createQueryFields(structTags), createQueryValues(structTags))
 
 	db := pg.conn
 
 	tx := db.MustBegin()
-	var secondIngredient = &usecases.Ingredient {
-		Name: "Pastarnac",
-		RecipeUID: 1918273,
-		Amount: 2,
-	}
 
-	tx.MustExec("INSERT INTO ingredient (ingredient_name, recipe_uid, amount) VALUES ($1, $2, $3)", "Telina", 1918273, 2)
-	tx.NamedExec("INSERT INTO ingredient (ingredient_name, recipe_uid, amount) VALUES (:ingredient_name, :recipe_uid, :amount)", &secondIngredient)
-	tx.MustExec("INSERT INTO ingredient (ingredient_name, recipe_uid, amount) VALUES ($1, $2, $3)", "Morcov", 1918273, 4)
-	tx.Commit()
-
-	ingredients := []usecases.Ingredient{}
-
-	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
+	tx.NamedExec(query, &menu)
+	err := tx.Commit()
 	if err != nil {
 		log.Println(err)
 	}
 
-	log.Printf("Len of ingredients: %d\n", len(ingredients))
-	if len(ingredients) >= 2 {
-		ingredient1, ingredient2 := ingredients[0], ingredients[1]
-		log.Printf("%#v\n%#v", ingredient1, ingredient2)
-	}
+	query = fmt.Sprintf("UPDATE messhall SET menu_uid = '%s' WHERE messhalls_uid = '%s';", menu.MenuUID, messhallUID);
 
-	pastarnac := Ingredient{}
-	err = db.Get(&pastarnac, "SELECT * FROM ingredient WHERE ingredient_name=$1;", "Pastarnac")
+	txMesshall := db.MustBegin()
+
+	txMesshall.NamedExec(query, &menu)
+	err = txMesshall.Commit()
 	if err != nil {
 		log.Println(err)
 	}
-
-	log.Printf("Pastarnacul: %#v\n", pastarnac)
-
-	pg.DeleteConnection()
 }
-
-*/
