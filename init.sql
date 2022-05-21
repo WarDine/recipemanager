@@ -50,7 +50,7 @@ create table recipe (
     -- constraint fk_recipe foreign key (messhall_uid) references messhall (messhalls_uid)
 );
 
-create table stock_ingredients (
+create table stock_ingredient (
     messhall_uid varchar(255),
     ingredient_uid varchar(255), -- primary key not null default nextval('ingredient_seq'),
     amount integer

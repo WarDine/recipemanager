@@ -181,6 +181,52 @@ func commonMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func handleGetStock(w http.ResponseWriter, r *http.Request) {
+	stock := repo.PostgresRepo.GetStock()
+	json.NewEncoder(w).Encode(stock)
+}
+
+func handleGetStockMesshall(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	messhallUID := params["messhallUID"]
+
+	stock := repo.PostgresRepo.GetStockOfMesshall(messhallUID)
+	json.NewEncoder(w).Encode(stock)
+}
+
+func handleGetStockIngredient(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	messhallUID := params["messhallUID"]
+	ingredientUID := params["ingredientUID"]
+
+	stock := repo.PostgresRepo.GetStockOfAlimentFromMesshall(messhallUID, ingredientUID)
+	json.NewEncoder(w).Encode(stock)
+}
+
+func handleAddStock(w http.ResponseWriter, r *http.Request) {
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		msg := "Content-Type header is not application/json\n"
+		http.Error(w, msg, http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var newStock usecases.StockIngredient
+	decoder := json.NewDecoder(r.Body)
+
+	err := decoder.Decode(&newStock)
+	if err != nil {
+		fmt.Fprintf(os.Stdout, "%+v", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		fmt.Fprintf(os.Stdout, "Stock: %+v\n", newStock)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	repo.PostgresRepo.InsertStockIntoDB(&newStock)
+	json.NewEncoder(w).Encode(newStock)
+}
+
 func NewRecipeAPI() *mux.Router {
 	
 	var router = mux.NewRouter()
@@ -196,14 +242,19 @@ func NewRecipeAPI() *mux.Router {
 	router.HandleFunc("/api/recipe/delete/{recipeUID}", handleDeleteRecipe).Methods("DELETE")
 	router.HandleFunc("/api/recipe/delete-by-messhall/{messhallUID}", handleDeleteRecipesForMesshall).Methods("DELETE")
 
-
 	router.HandleFunc("/api/ingredient", handleGetIngredient).Methods("GET")
 	router.HandleFunc("/api/ingredient/{recipeUID}", handleGetIngredientWithUID).Methods("GET")
-
 	router.HandleFunc("/api/ingredient/add", handleAddIngredient).Methods("POST")
 
 	router.HandleFunc("/api/recipe-ingredients", handleGetRecipeIngredients).Methods("GET")
 	router.HandleFunc("/api/recipe-ingredients/{recipeUID}", handleGetRecipeIngredientsByUID).Methods("GET")
+
+	router.HandleFunc("/api/stock", handleGetStock).Methods("GET")
+	router.HandleFunc("/api/stock-of-messhall/{messhallUID}", handleGetStockMesshall).Methods("GET")
+	router.HandleFunc("/api/stock-of-ingredient/{messhallUID}&{ingredientUID}", handleGetStockIngredient).Methods("GET")
+	router.HandleFunc("/api/stock/add", handleAddStock).Methods("POST")
+
+
 
 	// router.HandleFunc("/api/recipe-ingredients/add", handleAddIngredient).Methods("POST")
 	// router.HandleFunc("/api/recipe-ingredients/add", handleAddIngredient).Methods("POST")
