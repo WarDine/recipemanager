@@ -9,38 +9,38 @@ create sequence recipe_seq;
 create sequence ingredient_seq;
 
 create table menu (
-    menu_uid integer primary key not null default nextval('menu_seq'),
-    recipe_uid integer,
+    menu_uid varchar(255) primary key not null default nextval('menu_seq'),
+    recipe_uid varchar(255),
     time_stamp timestamp not null default current_timestamp
 );
 
 create table messhall (
-    messhalls_uid integer primary key not null default nextval('messhall_seq'),
+    messhalls_uid varchar(255) primary key not null default nextval('messhall_seq'),
     street varchar (255) not null,
     city varchar (255) not null,
     county varchar (255) not null,
-    menu_uid integer not null,
+    menu_uid varchar (255) not null,
     attendance_number integer not null
     -- constraint fk_messhall foreign key (menu_uid) references menu (menu_uid)
 );
 
 create table messhalls_admins (
-    messhalls_admins_uid integer primary key not null default nextval('messhall_admins_seq'),
+    messhalls_admins_uid varchar(255) primary key not null default nextval('messhall_admins_seq'),
     nickname varchar(255) not null,
-    messhall_uid integer unique 
+    messhall_uid varchar(255) unique 
 -- constraint fk_messhalls_admins foreign key (messhall_uid) references messhall (messhalls_uid)
 );
 
 create table main_admins (
-    main_admin_uid integer primary key not null default nextval('main_admin_seq'),
-    messhall_admin_uid integer,
+    main_admin_uid varchar(255) primary key not null default nextval('main_admin_seq'),
+    messhall_admin_uid varchar(255),
     nickname varchar(255) not null
     -- constraint fk_main_admins foreign key (messhall_admin_uid) references messhalls_admins (messhalls_admins_uid)
 );
 
 create table recipe (
-    recipe_uid integer primary key not null default nextval('recipe_seq'),
-    messhall_uid integer,
+    recipe_uid varchar(255) primary key not null,
+    messhall_uid varchar(255),
     nname varchar(255) not null,
     description varchar(1000) not null,
     calories integer,
@@ -51,19 +51,19 @@ create table recipe (
 );
 
 create table stock_ingredients (
-    messhall_uid integer,
-    ingredient_uid integer, -- primary key not null default nextval('ingredient_seq'),
+    messhall_uid varchar(255),
+    ingredient_uid varchar(255), -- primary key not null default nextval('ingredient_seq'),
     amount integer
 );
 
 create table recipe_ingredients (
-    ingredient_uid integer, -- primary key not null default nextval('ingredient_seq'),
-    recipe_uid integer,
+    ingredient_uid varchar(255),
+    recipe_uid varchar(255),
     amount integer
 );
 
 create table ingredient (
-    ingredient_uid integer primary key not null default nextval('ingredient_seq'),
+    ingredient_uid varchar(255) primary key not null default nextval('ingredient_seq'),
     ingredient_name varchar(255),
     calories integer
     -- constraint fk_ingredients foreign key (ingredient_uid) references recipe_ingredients (ingredient_uid)

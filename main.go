@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	fmt.Println("Hello motherfucker World!")
+	fmt.Println("RecipeManager-service started!")
 	repo.PostgresRepo = repo.NewPostgresManager()
 
 	api.StartServer()

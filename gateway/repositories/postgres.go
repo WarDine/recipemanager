@@ -37,9 +37,10 @@ func NewPostgresManager() *PostgresManager {
 		os.Getenv("PGHOST"), port, os.Getenv("PGUSER") , os.Getenv("PGPASSWORD"), os.Getenv("PGDATABASE"))
 
 	log.Println(".env: ", psqlInfo)
-	
+
+	// wait for database to accept connections
 	time.Sleep(20 * time.Second)
-	// conn, err := sql.Open("postgres", psqlInfo)
+
 	conn, err := sqlx.Connect("postgres", psqlInfo)
 	if err != nil {
 		time.Sleep(20 * time.Second)
@@ -68,27 +69,13 @@ func (pg *PostgresManager) DeleteConnection() {
 	defer pg.conn.Close()
 }
 
-// get list of all db tags of a struct ingredient
-// call with GetListDBTags(ingredient)
-func GetListDBTags(genericStruct *usecases.Ingredient) []string {
-
-	t := reflect.TypeOf(*genericStruct)
-
-	tagFields := make([]string, t.NumField())
-	for i := range tagFields {
-		tagFields[i] = GetDBTagName(genericStruct, t.Field(i).Name)
-	}
-
-	return tagFields
-}
-
 // get db tag name of a field from a generic struct
 func GetDBTagName(genericStruct interface{}, structField string) string {
 
 	tagName := "db"
 	field, ok := reflect.TypeOf(genericStruct).Elem().FieldByName(structField)
 	if !ok {
-		log.Fatal("Field not found")
+		log.Println("Field not found")
 	}
 
 	return string(field.Tag.Get(tagName))
@@ -138,42 +125,6 @@ func createQueryValues(fields []string ) string {
 }
 
 
-// example of query
-// tx.NamedExec("INSERT INTO ingredient (ingredient_name, recipe_uid, amount) VALUES (:ingredient_name, :recipe_uid, :amount)", &second_ingredient)
-func (pg *PostgresManager) InsertIngredientIntoDB(tableName string, ingredient *usecases.Ingredient) {
-
-	structTags := GetListDBTags(ingredient)
-	// INSERT INTO ingredient (ingredient_uid, ingredient_name, calories) VALUES (:ingredient_uid, :ingredient_name, :calories)
-	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, createQueryFields(structTags), createQueryValues(structTags))
-	log.Println("Query for databse is: ", query)
-	db := pg.conn
-
-	tx := db.MustBegin()
-
-	tx.NamedExec(query, &ingredient)
-	err := tx.Commit()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (pg *PostgresManager) GetAllIngredients(tableName string) []usecases.Ingredient {
-
-	db := pg.conn
-
-	ingredients := []usecases.Ingredient{}
-	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if len(ingredients) == 0 {
-		log.Println("Ingredients table is empty")
-	}
-
-	return ingredients
-}
-
 func convertfilterToString(m map[string]interface{}) {
 
 }
@@ -195,7 +146,7 @@ func (pg *PostgresManager) GetFilteredIngredients(tableName string, filter strin
 	ingredients := []usecases.Ingredient{}
 	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	if len(ingredients) == 0 {
@@ -227,7 +178,7 @@ func (pg *PostgresManager) TestDatabase(tableName string) {
 
 	err := db.Select(&ingredients, "SELECT * FROM ingredient;")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	log.Printf("Len of ingredients: %d\n", len(ingredients))
@@ -239,7 +190,7 @@ func (pg *PostgresManager) TestDatabase(tableName string) {
 	pastarnac := Ingredient{}
 	err = db.Get(&pastarnac, "SELECT * FROM ingredient WHERE ingredient_name=$1;", "Pastarnac")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	log.Printf("Pastarnacul: %#v\n", pastarnac)
