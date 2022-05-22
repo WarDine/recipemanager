@@ -476,6 +476,16 @@ func GenerateMenu(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func optionsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("!!!!!!!!!!!!!!!!!!!!REceived options request!!!!!!!!!!!!!!!!!!!!")
+	w.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(w).Encode("Received options. Send 200 ok")
+	if err != nil {
+		return
+	}
+	return
+}
+
 func NewRecipeAPI() *mux.Router {
 
 	var router = mux.NewRouter()
@@ -488,12 +498,16 @@ func NewRecipeAPI() *mux.Router {
 	router.HandleFunc("/api/recipe/get-by-messhall/{messhallUID}", handleGetRecipeByMesshallUID).Methods("GET")
 	router.HandleFunc("/api/recipe/get-asc-by-calories", handleGetRecipeByCaloriesAsc).Methods("GET")
 	router.HandleFunc("/api/recipe/add", handleAddRecipe).Methods("POST")
+	router.HandleFunc("/api/recipe/add", optionsHandler).Methods("OPTIONS")
+
 	router.HandleFunc("/api/recipe/delete/{recipeUID}", handleDeleteRecipe).Methods("DELETE")
 	router.HandleFunc("/api/recipe/delete-by-messhall/{messhallUID}", handleDeleteRecipesForMesshall).Methods("DELETE")
 
 	router.HandleFunc("/api/ingredient", handleGetIngredient).Methods("GET")
 	router.HandleFunc("/api/ingredient/{recipeUID}", handleGetIngredientWithUID).Methods("GET")
 	router.HandleFunc("/api/ingredient/add", handleAddIngredient).Methods("POST")
+	router.HandleFunc("/api/ingredient/add", optionsHandler).Methods("OPTIONS")
+
 	router.HandleFunc("/api/ingredient/generate/{messhallUID}", GenerateShoppingList).Methods("GET")
 
 	router.HandleFunc("/api/recipe-ingredients", handleGetRecipeIngredients).Methods("GET")
@@ -503,6 +517,7 @@ func NewRecipeAPI() *mux.Router {
 	router.HandleFunc("/api/stock-of-messhall/{messhallUID}", handleGetStockMesshall).Methods("GET")
 	router.HandleFunc("/api/stock-of-ingredient/{messhallUID}&{ingredientUID}", handleGetStockIngredient).Methods("GET")
 	router.HandleFunc("/api/stock/add", handleAddStock).Methods("POST")
+	router.HandleFunc("/api/stock/add", optionsHandler).Methods("OPTIONS")
 
 	// router.HandleFunc("/api/messhall/add", AddMessHall).Methods("POST")
 
