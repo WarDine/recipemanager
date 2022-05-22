@@ -3,17 +3,18 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
-	"os"
 	"log"
+	"net/http"
+	"os"
+	"recipemanager/domain"
 	repo "recipemanager/gateway/repositories"
 	"recipemanager/usecases"
-	"recipemanager/domain"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/handlers"
-	"github.com/jinzhu/copier"
+	"time"
+
 	"github.com/google/uuid"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/jinzhu/copier"
 )
 
 const (
@@ -116,7 +117,7 @@ func handleHelloWorld(w http.ResponseWriter, r *http.Request) {
 func handleDeleteRecipe(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	recipeUID := params["recipeUID"]
-	
+
 	err := repo.PostgresRepo.DeleteRecipe(recipeUID)
 	if err != nil {
 		log.Println(err)
@@ -173,7 +174,6 @@ func handleGetIngredientWithUID(w http.ResponseWriter, r *http.Request) {
 	ingredients := repo.PostgresRepo.GetAllIngredients("ingredient")
 	json.NewEncoder(w).Encode(ingredients)
 }
-
 
 func commonMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -256,7 +256,6 @@ func GenerateShoppingList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	messhallUID := params["messhallUID"]
 
-	
 	shoppingList := make(map[string]int)
 	stockMap := make(map[string]int)
 	recipeMap := make(map[string]int)
@@ -282,7 +281,7 @@ func GenerateShoppingList(w http.ResponseWriter, r *http.Request) {
 	for _, menuEntry := range menu {
 		recipeIngredients = append(recipeIngredients, repo.PostgresRepo.GetIngredientsForRecipe(menuEntry.RecipeUID)...)
 	}
-	
+
 	// create map with all ingredients we need
 	for _, ingredientsEntry := range recipeIngredients {
 		recipeMap[ingredientsEntry.Ingredient_uid] += ingredientsEntry.Amount
@@ -300,17 +299,16 @@ func GenerateShoppingList(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if  stockIngredientAmount < amount {
+		if stockIngredientAmount < amount {
 			log.Println("??")
 			shoppingList[ingredientUID] = amount - stockIngredientAmount
-		} 
+		}
 	}
 
 	log.Println("Shopping List: ", shoppingList)
 
 	json.NewEncoder(w).Encode(shoppingList)
 }
-
 
 //API
 // AddMessHall add a new mess hall and its admin
@@ -371,7 +369,6 @@ func GenerateShoppingList(w http.ResponseWriter, r *http.Request) {
 // 	}
 // }
 
-
 func GenerateMenu(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
@@ -381,10 +378,10 @@ func GenerateMenu(w http.ResponseWriter, r *http.Request) {
 
 	menuUID := uuid.New().String()
 	menuTimestamp := time.Now().Format("01-02-2006")
-	
+
 	for _, recipe := range recipes {
-		menu := &usecases.Menu {
-			MenuUID: menuUID,
+		menu := &usecases.Menu{
+			MenuUID:   menuUID,
 			RecipeUID: recipe.RecipeUID,
 			TimeStamp: menuTimestamp,
 		}
@@ -394,7 +391,7 @@ func GenerateMenu(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewRecipeAPI() *mux.Router {
-	
+
 	var router = mux.NewRouter()
 	router.Use(commonMiddleware)
 
@@ -427,7 +424,6 @@ func NewRecipeAPI() *mux.Router {
 	// router.HandleFunc("/api/menu/add/{messhallUID}", AddMenu).Methods("POST")
 	router.HandleFunc("/api/menu/generate/{messhallUID}", GenerateMenu).Methods("GET")
 
-
 	return router
 }
 
@@ -435,8 +431,8 @@ func StartServer() {
 
 	headersOk := handlers.AllowedHeaders([]string{"Authorization"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE"})
-	
+	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "UPDATE"})
+
 	router := NewRecipeAPI()
 
 	fmt.Printf("HTTP Server is running at http://localhost%s\n", HttpServerPort)

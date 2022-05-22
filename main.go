@@ -12,5 +12,5 @@ func main() {
 	repo.PostgresRepo = repo.NewPostgresManager()
 
 	api.StartServer()
-	
+
 }
