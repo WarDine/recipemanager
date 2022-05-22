@@ -530,9 +530,9 @@ func NewRecipeAPI() *mux.Router {
 
 func StartServer() {
 
-	headersOk := handlers.AllowedHeaders([]string{"Authorization"})
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization", "Origin", "application/json"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "UPDATE"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "UPDATE", "OPTIONS", "PUT", "PATCH"})
 
 	router := NewRecipeAPI()
 
