@@ -169,10 +169,13 @@ func (pg *PostgresManager) GetMessHallsInfoByID(id string) ([]usecases.MessHall,
 	messHalls := []usecases.MessHall{}
 	query := fmt.Sprintf(selectMessHallInfoByIDQuery, id)
 	err := db.Select(&messHalls, query)
-
 	if err != nil {
+		log.Println("ERROR: Cannot get messhalls in GetMessHallsInfoByID")
+		log.Println(err)
 		return nil, err
 	}
+
+	log.Println("Messhall in GetMessHallsInfoByID: ", messHalls)
 
 	return messHalls, nil
 }
@@ -202,6 +205,8 @@ func (pg *PostgresManager) GetMessHallMenuInfo(messHallID string) ([]usecases.Me
 	if err != nil {
 		return nil, err
 	}
+
+	log.Println("Messhall Menu: ", messHallMenu)
 
 	return messHallMenu, nil
 }

@@ -210,8 +210,12 @@ func GetMessHallMenu(w http.ResponseWriter, r *http.Request) {
 
 	messHallMenuEntries, err := repo.PostgresRepo.GetMessHallMenuInfo(messhallUID)
 	if err != nil {
+		json.NewEncoder(w).Encode("Cannot get messhall menu info")
 		return
 	}
+
+	fmt.Fprintf(os.Stdout, "GetMessHallMenu: \n")
+	log.Println("FROM LOG: GetMessHallMenu")
 
 	log.Println("Messhall menu entries: ", messHallMenuEntries)
 	menuRecipes := []usecases.Recipe{}
