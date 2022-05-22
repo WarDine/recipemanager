@@ -49,12 +49,94 @@ func handleAddRecipe(w http.ResponseWriter, r *http.Request) {
 	newRecipe.RecipeUID = uuid.New().String()
 	repo.PostgresRepo.InsertRecipeIntoDB("recipe", &newRecipe)
 
-	for _, recipeIngredient := range recipeBlob.RecipeIngredients {
-		recipeIngredient.RecipeUID = newRecipe.RecipeUID
-		repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", &recipeIngredient)
+	ingredient1 := &usecases.Ingredient {
+		Ingredient_uid: uuid.New().String(),
+		Name: "Ceapa",
+		Calories: 40,
 	}
 
+	ingredient2 := &usecases.Ingredient {
+		Ingredient_uid: uuid.New().String(),
+		Name: "Marcov",
+		Calories: 42,
+	}
+
+	ingredient3 := &usecases.Ingredient {
+		Ingredient_uid: uuid.New().String(),
+		Name: "Cartofi",
+		Calories: 87,
+	}
+
+	ingredient4 := &usecases.Ingredient {
+		Ingredient_uid: uuid.New().String(),
+		Name: "Patrunjel",
+		Calories: 36,
+	}
+
+	ingredient5 := &usecases.Ingredient {
+		Ingredient_uid: uuid.New().String(),
+		Name: "Pastarnac",
+		Calories: 75,
+	}
+
+	recipeIngredient1 := &usecases.RecipeIngredient {
+		RecipeUID: newRecipe.RecipeUID,
+		Ingredient_uid: ingredient1.Ingredient_uid,
+		Amount: 3,
+	}
+
+	recipeIngredient2 := &usecases.RecipeIngredient {
+		RecipeUID: newRecipe.RecipeUID,
+		Ingredient_uid: ingredient2.Ingredient_uid,
+		Amount: 5,
+	}
+	recipeIngredient3 := &usecases.RecipeIngredient {
+		RecipeUID: newRecipe.RecipeUID,
+		Ingredient_uid: ingredient3.Ingredient_uid,
+		Amount: 10,
+	}
+	recipeIngredient4 := &usecases.RecipeIngredient {
+		RecipeUID: newRecipe.RecipeUID,
+		Ingredient_uid: ingredient4.Ingredient_uid,
+		Amount: 3,
+	}
+	recipeIngredient5 := &usecases.RecipeIngredient {
+		RecipeUID: newRecipe.RecipeUID,
+		Ingredient_uid: ingredient5.Ingredient_uid,
+		Amount: 2,
+	}
+
+	repo.PostgresRepo.InsertIngredientIntoDB("ingredient", ingredient1)
+	repo.PostgresRepo.InsertIngredientIntoDB("ingredient", ingredient2)
+	repo.PostgresRepo.InsertIngredientIntoDB("ingredient", ingredient3)
+	repo.PostgresRepo.InsertIngredientIntoDB("ingredient", ingredient4)
+	repo.PostgresRepo.InsertIngredientIntoDB("ingredient", ingredient5)
+
+	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", recipeIngredient1)
+	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", recipeIngredient2)
+	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", recipeIngredient3)
+	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", recipeIngredient4)
+	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", recipeIngredient5)
+
 	json.NewEncoder(w).Encode(newRecipe)
+
+	// for _, ingredientDetails := range recipeBlob.IngredientDetails {
+	// 	// recipeIngredient.RecipeUID = newRecipe.RecipeUID
+	// 	recipeIngredient := &usecases.RecipeIngredient{
+	// 		RecipeUID: newRecipe.RecipeUID,
+	// 		Ingredient_uid: uuid.New().String(),
+	// 		Amount: ingredientDetails.Amount,
+	// 	}
+
+	// 	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", &recipeIngredient)
+	// }
+
+	// for _, recipeIngredient := range recipeBlob.RecipeIngredients {
+	// 	recipeIngredient.RecipeUID = newRecipe.RecipeUID
+	// 	repo.PostgresRepo.InsertRecipeIngredientIntoDB("recipe_ingredients", &recipeIngredient)
+	// }
+
+	// json.NewEncoder(w).Encode(newRecipe)
 }
 
 func handleAddIngredient(w http.ResponseWriter, r *http.Request) {

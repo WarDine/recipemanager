@@ -9,9 +9,14 @@ import (
 type PostgressManagerInterface interface {
 }
 
+type IngredientDetails struct {
+	Name string
+	Amount int
+}
+
 type PostgresManagerCreateRecipeStruct struct {
 	Recipe usecases.Recipe `json:"recipe"`
-	RecipeIngredients []usecases.RecipeIngredient `json:"recipeIngredients"`
+	IngredientDetails []IngredientDetails `json:"recipeIngredients"`
 }
 
 type AddMessHallInfoQuery struct {
